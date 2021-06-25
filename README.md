@@ -24,3 +24,20 @@ Bguh5zu7gX3nyYrXk
 ```
 
 (it's the alphanumeric text that follows the story title, but (if applicable) comes before the chapter title)
+
+Added command line arguments are
+
+```
+--mode ['view','scrape','targeted']
+--outputDirectory
+--sortType ['new', 'active', 'chapter', 'replies', 'like', 'top']
+--startPage Integer, 1-1000+
+--endPage Integer, 1-1000+
+--skipChat Boolean, false by default
+--downloadImages Boolean, true by default
+--useSkipList Boolean, false by default
+--skipListPath Path to Skip List
+--useTargetList Boolean, false by default
+--targetListPath Path to Target List
+--target Target Quest ID
+```
