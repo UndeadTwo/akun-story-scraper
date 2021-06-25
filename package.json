@@ -15,6 +15,7 @@
     "akun-api": "git+https://github.com/Fiddlekins/akun-api.git#5.0.2",
     "archiver": "^3.0.0",
     "autoprefixer": "^9.4.5",
+    "command-line-args": "^5.1.1",
     "cssnano": "^4.1.8",
     "escape-html": "^1.0.3",
     "fs-extra": "^4.0.2",

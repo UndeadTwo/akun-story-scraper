@@ -1,6 +1,7 @@
 import Akun from 'akun-api';
 import fs from 'fs-extra';
 import inquirer from 'inquirer';
+import commandLineArgs from 'command-line-args';
 import path from 'path';
 import prettyMs from 'pretty-ms';
 import {fileURLToPath} from 'url';
@@ -14,6 +15,21 @@ import buildView from './view/buildView.js';
 
 const logger = new Logger();
 const projectRoot = path.join(fileURLToPath(import.meta.url), '..', '..');
+
+const options = commandLineArgs([
+	{ name: 'mode', alias: 'm', type: String},
+	{ name: 'outputDirectory', alias: 'o', type: String},
+	{ name: 'sortType', alias: 's', type: String},
+	{ name: 'startPage', alias: 'q', type: Number, defaultValue: 1},
+	{ name: 'endPage', alias: 'w', type: Number, defaultValue: 1000},
+	{ name: 'skipChat', alias: 'c', type: Boolean, defaultValue: false},
+	{ name: 'downloadImages', alias: 'd', type: Boolean, defaultValue: true},
+	{ name: 'useSkipList', alias: 'k', type: Boolean, defaultValue: false},
+	{ name: 'skipListPath', alias: 'l', type: String},
+	{ name: 'useTargetList', alias: 't', type: Boolean, defaultValue: false},
+	{ name: 'targetListPath', alias: 'y', type: String},
+	{ name: 'target', alias: 'i', type: String},
+]);
 
 async function getCredentials() {
 	let credentialsJson;
@@ -53,29 +69,33 @@ async function confirmCredentials(akun, credentials) {
 }
 
 async function start() {
+	let mode = options['mode'];
 
-	const {mode} = await inquirer.prompt({
-		type: 'list',
-		name: 'mode',
-		message: 'Run in which mode?',
-		choices: [
-			{
-				name: 'Targeted (Archives specific stories)',
-				value: 'targeted',
-				short: 'Targeted'
-			},
-			{
-				name: 'Scrape (Archives all stories)',
-				value: 'scrape',
-				short: 'Scrape'
-			},
-			{
-				name: 'Build View (Convert archived data into viewable HTML)',
-				value: 'view',
-				short: 'Build View'
-			}
-		]
-	});
+	if(mode === undefined)
+	{
+		mode = await inquirer.prompt({
+			type: 'list',
+			name: 'mode',
+			message: 'Run in which mode?',
+			choices: [
+				{
+					name: 'Targeted (Archives specific stories)',
+					value: 'targeted',
+					short: 'Targeted'
+				},
+				{
+					name: 'Scrape (Archives all stories)',
+					value: 'scrape',
+					short: 'Scrape'
+				},
+				{
+					name: 'Build View (Convert archived data into viewable HTML)',
+					value: 'view',
+					short: 'Build View'
+				}
+			]
+		})['mode'];
+	}
 
 	if (mode === 'view') {
 		await view();
@@ -114,12 +134,16 @@ async function start() {
 		}
 	}
 
-	const {outputDirectory} = await inquirer.prompt({
-		type: 'input',
-		name: 'outputDirectory',
-		message: 'Output directory for archived data:',
-		default: path.join(projectRoot, `data-${Date.now()}`)
-	});
+	let outputDirectory = options['outputDirectory'];
+
+	if(outputDirectory === undefined) {
+		outputDirectory = await inquirer.prompt({
+			type: 'input',
+			name: 'outputDirectory',
+			message: 'Output directory for archived data:',
+			default: path.join(projectRoot, `data-${Date.now()}`)
+		})['outputDirectory'];
+	}
 
 	const scraper = new Scraper({
 		akun,
@@ -142,82 +166,102 @@ async function start() {
 }
 
 async function scrape(scraper) {
-	const {sortType, startPage, endPage, skipChat, downloadImages, useSkipList} = await inquirer.prompt([
-		{
-			type: 'list',
-			name: 'sortType',
-			message: 'Sort type (determines the order to archive quests in):',
-			choices: [
-				{
-					name: 'Sort by the newest stories',
-					value: Scraper.SORT_MODES.NEW,
-					short: 'new'
-				},
-				{
-					name: 'Sort by the latest activity in the story, including chat posts',
-					value: Scraper.SORT_MODES.ACTIVE,
-					short: 'active'
-				},
-				{
-					name: 'Sort by the latest posted chapter',
-					value: Scraper.SORT_MODES.CHAPTER,
-					short: 'chapter'
-				},
-				{
-					name: 'Sort by the most commented stories',
-					value: Scraper.SORT_MODES.REPLIES,
-					short: 'replies'
-				},
-				{
-					name: 'Sort by the most liked stories',
-					value: Scraper.SORT_MODES.LIKE,
-					short: 'likes'
-				},
-				{
-					name: 'Sort by the most commented stories',
-					value: Scraper.SORT_MODES.TOP,
-					short: 'top'
-				}
-			]
-		},
-		{
-			type: 'input',
-			name: 'startPage',
-			message: 'Start page:',
-			default: 1
-		},
-		{
-			type: 'input',
-			name: 'endPage',
-			message: 'End page:',
-			default: 1000
-		},
-		{
-			type: 'confirm',
-			name: 'skipChat',
-			message: 'Skip chat:'
-		},
-		{
-			type: 'confirm',
-			name: 'downloadImages',
-			message: 'Download images:'
-		},
-		{
-			type: 'confirm',
-			name: 'useSkipList',
-			message: 'Use a skip list to avoid archiving specific stories?',
-			default: false
-		}
-	]);
+	let sortType = options['sortType'];
+	let startPage = options['startPage'];
+	let endPage = options['endPage'];
+	let skipChat = options['skipChat'];
+	let downloadImages = options['downloadImages'];
+	let useSkipList = options['useSkipList'];
+
+	if(sortType === undefined)
+		sortType = await inquirer.prompt([{
+		type: 'list',
+		name: 'sortType',
+		message: 'Sort type (determines the order to archive quests in):',
+		choices: [
+			{
+				name: 'Sort by the newest stories',
+				value: Scraper.SORT_MODES.NEW,
+				short: 'new'
+			},
+			{
+				name: 'Sort by the latest activity in the story, including chat posts',
+				value: Scraper.SORT_MODES.ACTIVE,
+				short: 'active'
+			},
+			{
+				name: 'Sort by the latest posted chapter',
+				value: Scraper.SORT_MODES.CHAPTER,
+				short: 'chapter'
+			},
+			{
+				name: 'Sort by the most commented stories',
+				value: Scraper.SORT_MODES.REPLIES,
+				short: 'replies'
+			},
+			{
+				name: 'Sort by the most liked stories',
+				value: Scraper.SORT_MODES.LIKE,
+				short: 'likes'
+			},
+			{
+				name: 'Sort by the most commented stories',
+				value: Scraper.SORT_MODES.TOP,
+				short: 'top'
+			}
+		]
+	}]);
+
+	if(startPage === undefined)
+		startPage = await inquirer.prompt([{
+		type: 'input',
+		name: 'startPage',
+		message: 'Start page:',
+		default: 1
+	}]);
+
+	if(endPage === undefined)
+		endPage = await inquirer.prompt([{
+		type: 'input',
+		name: 'endPage',
+		message: 'End page:',
+		default: 1000
+	}]);
+
+	if(skipChat === undefined)
+		skipChat = await inquirer.prompt([{
+		type: 'confirm',
+		name: 'skipChat',
+		message: 'Skip chat:'
+	}]);
+
+	if(downloadImages === undefined)
+		downloadImages = await inquirer.prompt([{
+		type: 'confirm',
+		name: 'downloadImages',
+		message: 'Download images:'
+	}]);
+
+	if(useSkipList === undefined)
+		useSkipList = await inquirer.prompt([{
+		type: 'confirm',
+		name: 'useSkipList',
+		message: 'Use a skip list to avoid archiving specific stories?',
+		default: false
+	}]);
 
 	let skip = [];
-	if (useSkipList) {
-		const {skipListPath} = await inquirer.prompt({
-			type: 'input',
-			name: 'skipListPath',
-			message: 'Skip list path:',
-			default: path.join(projectRoot, 'skiplist.txt')
-		});
+	if(useSkipList) {
+		let skipListPath = options['skipListPath'];
+		if (skipListPath === undefined) {
+			skipListPath = await inquirer.prompt({
+				type: 'input',
+				name: 'skipListPath',
+				message: 'Skip list path:',
+				default: path.join(projectRoot, 'skiplist.txt')
+			})['skipListPath'];
+		}
+
 		skip = await getStoryList(skipListPath);
 	}
 
@@ -225,40 +269,56 @@ async function scrape(scraper) {
 }
 
 async function targeted(scraper) {
-	const {skipChat, useTargetList, downloadImages} = await inquirer.prompt([
-		{
+	let skipChat = options['skipChat'];
+	let useTargetList = options['useTargetList'];
+	let downloadImages = options['downloadImages'];
+
+	if(skipChat === undefined)
+		skipChat = await inquirer.prompt([{
 			type: 'confirm',
 			name: 'skipChat',
 			message: 'Skip chat:'
-		},
-		{
+		}]);
+
+	if(useTargetList === undefined)
+		useTargetList = await inquirer.prompt([{
 			type: 'confirm',
 			name: 'downloadImages',
 			message: 'Download images:'
-		},
-		{
+		}]);
+
+	if(downloadImages === undefined)
+		downloadImages = await inquirer.prompt([{
 			type: 'confirm',
 			name: 'useTargetList',
 			message: 'Use a target list to archive specific stories?',
 			default: true
-		}
-	]);
+		}]);
 
 	let targets;
 	if (useTargetList) {
-		const {targetListPath} = await inquirer.prompt({
-			type: 'input',
-			name: 'targetListPath',
-			message: 'Target list path:',
-			default: path.join(projectRoot, 'targetlist.txt')
-		});
+		let targetListPath = options['targetListPath'];
+
+		if(targetListPath === undefined)
+			targetListPath = await inquirer.prompt({
+				type: 'input',
+				name: 'targetListPath',
+				message: 'Target list path:',
+				default: path.join(projectRoot, 'targetlist.txt')
+			})['targetListPath'];
+
 		targets = await buildTargetList(await getStoryList(targetListPath), scraper, logger, skipChat);
-	} else {
-		const {target} = await inquirer.prompt({
-			type: 'input',
-			name: 'target',
-			message: 'Target story id (first alphanumeric hash segment from story URL):'
-		});
+	}
+	else {
+		let target = options['target'];
+
+		if(target === undefined)
+			target = await inquirer.prompt({
+				type: 'input',
+				name: 'target',
+				message: 'Target story id (first alphanumeric hash segment from story URL):'
+			});
+
 		targets = [{
 			storyId: target,
 			skipChat
