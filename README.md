@@ -16,11 +16,11 @@ This can be done simply by examining the story URL.
 
 In this example URL:
 ```
-https://fiction.live/stories/Depravity/ya9v6ZAGRYNnoT9ay/Chapter-7-The-Chapter-With-Horse-Cocks/EvqrzX67ry8KaTdpu
+https://fiction.live/stories/Star-Wars-TR-8R-Quest/Bguh5zu7gX3nyYrXk/Mission-18-The-Price-of-Theft-/yvFfTTSQbH2o34vgW
 ```
 the story ID is
 ```
-ya9v6ZAGRYNnoT9ay
+Bguh5zu7gX3nyYrXk
 ```
 
 (it's the alphanumeric text that follows the story title, but (if applicable) comes before the chapter title)
